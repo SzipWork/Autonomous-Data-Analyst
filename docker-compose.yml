@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app
+    volumes:
+      - ./uploads:/app/uploads
+    env_file:
+      - .env
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+    networks:
+      - analyst-network
+
+  frontend:
+    build: .
+    ports:
+      - "8501:8501"
+    environment:
+      - API_BASE_URL=http://backend:8000  # ✅ Use service name
+      - PYTHONPATH=/app
+    command: streamlit run frontend.py --server.port=8501 --server.address=0.0.0.0
+    depends_on:
+      - backend
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - analyst-network
+
+networks:
+  analyst-network:
+    driver: bridge
